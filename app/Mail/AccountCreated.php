@@ -36,7 +36,7 @@ class AccountCreated extends Mailable
                 config('mail.from.address'),
                 config('mail.from.name')
             ),
-            subject: 'Welcome to QSU Motor Pool System - Account Created',
+            subject: 'Welcome to GSU Motorpool Services - Account Created',
         );
     }
 

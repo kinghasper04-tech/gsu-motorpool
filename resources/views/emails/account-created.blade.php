@@ -1,9 +1,9 @@
 @component('mail::message')
-# Welcome to QSU Motor Pool System
+# Welcome to GSU Motorpool Services
 
 Hello **{{ $user->name }}**,
 
-Your account has been created for the QSU Motor Pool Services Request System. You can now submit vehicle requests and track their status.
+Your account has been created for the GSU Motorpool Services Request System. You can now submit vehicle requests and track their status.
 
 ## Your Login Credentials
 
@@ -36,15 +36,14 @@ With your new account, you can:
 
 If you have any questions or need assistance, please contact:
 - **General Services Unit**
-- **Email:** gsu@qsu.edu.ph
-- **Phone:** (078) 692-1234
+- **Email:** hasperthegreat04@gmail.com
 
 ---
 
 Thank you,  
-**QSU Motor Pool Management**
+**GSU Motorpool Management**
 
 @component('mail::subcopy')
-If you did not request this account, please contact the administrator immediately at gsu@qsu.edu.ph
+If you did not request this account, please contact the administrator immediately at hasperthegreat04@gmail.com
 @endcomponent
 @endcomponent

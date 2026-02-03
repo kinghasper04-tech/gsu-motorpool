@@ -38,9 +38,6 @@ class NotificationService
                     'action_url' => route('assignment.requests.index'),
                     'read' => false,
                 ]);
-
-                // Send email (optional)
-                // Mail::to($admin->email)->send(new RequestSubmittedMail($request));
             }
 
             Log::info('Assignment admins notified of new request', [
@@ -81,9 +78,6 @@ class NotificationService
                     'action_url' => route('admin.requests.management'),
                     'read' => false,
                 ]);
-
-                // Send email (optional)
-                // Mail::to($admin->email)->send(new RequestAssignedForApprovalMail($request));
             }
 
             // Also notify the client that their request has been assigned
@@ -123,9 +117,6 @@ class NotificationService
                 'read' => false,
             ]);
 
-            // Send email (optional)
-            // Mail::to($request->user->email)->send(new VehicleAssignedMail($request));
-
         } catch (\Exception $e) {
             Log::error('Failed to notify client of assignment', [
                 'request_id' => $request->id,
@@ -136,15 +127,15 @@ class NotificationService
 
     /**
      * 3. APPROVAL ADMIN APPROVES/DECLINES
-     * Notify: Client (with email including PDF link if approved), Ticket Admin (if approved)
+     * Notify: Client (in-app only — the approval email with PDF attachment
+     *          is already sent by ApprovalController::approve())
+     *
+     * Notify: Ticket Admin (if approved) — handled separately via notifyTicketAdmin()
      */
     public function notifyClient(VehicleRequest $request, string $action)
     {
         try {
             if ($action === 'approved') {
-                // Generate PDF download link (signed URL for security)
-                $pdfDownloadUrl = route('client.requests.pdf', ['id' => $request->id]);
-                
                 Notification::create([
                     'user_id' => $request->user_id,
                     'type' => 'request_approved',
@@ -157,26 +148,13 @@ class NotificationService
                         'driver' => $request->driver->name ?? 'N/A',
                         'approved_by' => $request->approver->name ?? 'Admin',
                         'approved_at' => $request->approved_at->format('Y-m-d H:i:s'),
-                        'pdf_url' => $pdfDownloadUrl,
                     ],
                     'action_url' => route('requests.index'),
                     'read' => false,
                 ]);
 
-                // Send approval email with PDF download link
-                try {
-                    Mail::to($request->user->email)->send(new \App\Mail\RequestApproved($request, $pdfDownloadUrl));
-                    
-                    Log::info('Approval email sent to client', [
-                        'request_id' => $request->id,
-                        'email' => $request->user->email
-                    ]);
-                } catch (\Exception $mailException) {
-                    Log::error('Failed to send approval email', [
-                        'request_id' => $request->id,
-                        'error' => $mailException->getMessage()
-                    ]);
-                }
+                // NOTE: The approval email (with PDF attachment) is sent directly
+                // in ApprovalController::approve(). Do NOT send it again here.
 
             } elseif ($action === 'declined') {
                 Notification::create([
@@ -194,9 +172,6 @@ class NotificationService
                     'action_url' => route('requests.index'),
                     'read' => false,
                 ]);
-
-                // Send decline email (optional)
-                // Mail::to($request->user->email)->send(new RequestDeclinedMail($request));
             }
 
             Log::info("Client notified of request {$action}", [
@@ -277,9 +252,6 @@ class NotificationService
                     'action_url' => route('tickets.pending-requests'),
                     'read' => false,
                 ]);
-
-                // Send email (optional)
-                // Mail::to($admin->email)->send(new PrepareTicketMail($request));
             }
 
             Log::info('Ticket admins notified for trip ticket preparation', [

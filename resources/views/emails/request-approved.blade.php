@@ -54,20 +54,6 @@
         .value {
             color: #111827;
         }
-        .download-button {
-            display: inline-block;
-            background-color: #3b82f6;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .download-button:hover {
-            background-color: #2563eb;
-        }
         .footer {
             text-align: center;
             margin-top: 30px;
@@ -77,8 +63,8 @@
             font-size: 14px;
         }
         .note {
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
             padding: 12px;
             margin: 20px 0;
             border-radius: 4px;
@@ -140,32 +126,26 @@
                 <span class="value">{{ $approvedAt }}</span>
             </div>
         </div>
-        
+
         <div class="note">
-            <strong>📄 Download Your Request Form</strong><br>
-            Click the button below to download your approved request form in PDF format.
+            <strong>📄 Approved Request Form</strong><br>
+            Your approved request form has been attached to this email as a PDF. Please save it for your records.
         </div>
         
-        <div style="text-align: center;">
-            <a href="{{ $pdfDownloadUrl }}" class="download-button">
-                📥 Download Request Form PDF
-            </a>
-        </div>
-        
-        <p style="margin-top: 30px;">
+        <p>
             <strong>Next Steps:</strong>
         </p>
         <ul>
             <li>A trip ticket will be generated shortly</li>
             <li>You will receive another notification when the trip ticket is ready</li>
-            <li>Please keep this approved request form for your records</li>
+            <li>Please keep the attached approved request form for your records</li>
         </ul>
         
-        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <p>If you have any questions or concerns, please don't hesitate to contact us at <strong>hasperthegreat04@gmail.com</strong>.</p>
     </div>
     
     <div class="footer">
-        <p>This is an automated email from the Motor Pool Services Request System.</p>
+        <p>This is an automated email from the GSU Motorpool Services Request System.</p>
         <p>Please do not reply to this email.</p>
     </div>
 </body>
