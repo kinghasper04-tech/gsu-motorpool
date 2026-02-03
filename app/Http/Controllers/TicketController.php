@@ -457,8 +457,6 @@ class TicketController extends Controller
 
             \DB::commit();
 
-            $this->notificationService->notifyTicketGenerated($vehicleRequest);
-
             // Refresh and store for viewing
             $vehicleRequest->refresh();
             $vehicleRequest->load(['driver', 'vehicle', 'user']);
@@ -508,9 +506,6 @@ class TicketController extends Controller
             ]);
 
             \DB::commit();
-
-            $vehicleRequest->load(['driver', 'vehicle', 'user']);
-            $this->notificationService->notifyTicketGenerated($vehicleRequest);
 
             return redirect()->back()->with('success', 'Trip ticket number updated successfully');
 
