@@ -44,6 +44,7 @@ return array(
     'Symfony\\Component\\Console\\' => array($vendorDir . '/symfony/console'),
     'Symfony\\Component\\Clock\\' => array($vendorDir . '/symfony/clock'),
     'Svg\\' => array($vendorDir . '/dompdf/php-svg-lib/src/Svg'),
+    'Sichikawa\\LaravelSendgridDriver\\' => array($vendorDir . '/s-ichikawa/laravel-sendgrid-driver/src'),
     'Sabberworm\\CSS\\' => array($vendorDir . '/sabberworm/php-css-parser/src'),
     'Resend\\Laravel\\' => array($vendorDir . '/resend/resend-laravel/src'),
     'Resend\\' => array($vendorDir . '/resend/resend-php/src'),

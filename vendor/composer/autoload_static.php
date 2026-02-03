@@ -99,6 +99,7 @@ class ComposerStaticInit3e0250d7b1e85eae7ff8a0319ed1d379
             'Symfony\\Component\\Console\\' => 26,
             'Symfony\\Component\\Clock\\' => 24,
             'Svg\\' => 4,
+            'Sichikawa\\LaravelSendgridDriver\\' => 32,
             'Sabberworm\\CSS\\' => 15,
         ),
         'R' => 
@@ -358,6 +359,10 @@ class ComposerStaticInit3e0250d7b1e85eae7ff8a0319ed1d379
         'Svg\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
+        ),
+        'Sichikawa\\LaravelSendgridDriver\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/s-ichikawa/laravel-sendgrid-driver/src',
         ),
         'Sabberworm\\CSS\\' => 
         array (
@@ -659,10 +664,8 @@ class ComposerStaticInit3e0250d7b1e85eae7ff8a0319ed1d379
         'App\\Http\\Middleware\\RoleMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/RoleMiddleware.php',
         'App\\Http\\Requests\\Auth\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Auth/LoginRequest.php',
         'App\\Http\\Requests\\ProfileUpdateRequest' => __DIR__ . '/../..' . '/app/Http/Requests/ProfileUpdateRequest.php',
-        'App\\Mail\\AccountApprovedMail' => __DIR__ . '/../..' . '/app/Mail/AccountApprovedMail.php',
-        'App\\Mail\\AdminAccountCreatedMail' => __DIR__ . '/../..' . '/app/Mail/AdminAccountCreatedMail.php',
-        'App\\Mail\\RequestStatusUpdated' => __DIR__ . '/../..' . '/app/Mail/RequestStatusUpdated.php',
-        'App\\Mail\\UserAccountCreatedMail' => __DIR__ . '/../..' . '/app/Mail/UserAccountCreatedMail.php',
+        'App\\Mail\\AccountCreated' => __DIR__ . '/../..' . '/app/Mail/AccountCreated.php',
+        'App\\Mail\\RequestApproved' => __DIR__ . '/../..' . '/app/Mail/RequestApproved.php',
         'App\\Models\\Assignment' => __DIR__ . '/../..' . '/app/Models/Assignment.php',
         'App\\Models\\Driver' => __DIR__ . '/../..' . '/app/Models/Driver.php',
         'App\\Models\\FuelConsumption' => __DIR__ . '/../..' . '/app/Models/FuelConsumption.php',
@@ -6929,6 +6932,10 @@ class ComposerStaticInit3e0250d7b1e85eae7ff8a0319ed1d379
         'SebastianBergmann\\Type\\UnknownType' => __DIR__ . '/..' . '/sebastian/type/src/type/UnknownType.php',
         'SebastianBergmann\\Type\\VoidType' => __DIR__ . '/..' . '/sebastian/type/src/type/VoidType.php',
         'SebastianBergmann\\Version' => __DIR__ . '/..' . '/sebastian/version/src/Version.php',
+        'Sichikawa\\LaravelSendgridDriver\\MailServiceProvider' => __DIR__ . '/..' . '/s-ichikawa/laravel-sendgrid-driver/src/MailServiceProvider.php',
+        'Sichikawa\\LaravelSendgridDriver\\SendGrid' => __DIR__ . '/..' . '/s-ichikawa/laravel-sendgrid-driver/src/SendGrid.php',
+        'Sichikawa\\LaravelSendgridDriver\\SendgridTransportServiceProvider' => __DIR__ . '/..' . '/s-ichikawa/laravel-sendgrid-driver/src/SendgridTransportServiceProvider.php',
+        'Sichikawa\\LaravelSendgridDriver\\Transport\\SendgridTransport' => __DIR__ . '/..' . '/s-ichikawa/laravel-sendgrid-driver/src/Transport/SendgridTransport.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'Svg\\CssLength' => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg/CssLength.php',
         'Svg\\DefaultStyle' => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg/DefaultStyle.php',
