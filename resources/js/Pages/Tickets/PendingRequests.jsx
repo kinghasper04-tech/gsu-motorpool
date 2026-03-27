@@ -358,11 +358,6 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                             Travel Date & Time
                         </th>
-                        {activeTab === 'pending' && (
-                            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                Purpose
-                            </th>
-                        )}
                         {showActions && (
                             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                 Actions
