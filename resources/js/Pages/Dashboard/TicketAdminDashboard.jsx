@@ -57,7 +57,7 @@ export default function TicketAdminDashboard({ data }) {
                         {/* Main Content Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Pending Tickets Queue - 2 columns */}
-                            <div className="lg:col-span-2">
+                            <div className="lg:col-span-2 space-y-6">
                                 <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                                     <div className="bg-gradient-to-r from-amber-50 to-orange-100 px-6 py-4 border-b border-amber-200">
                                         <div className="flex items-center justify-between">
