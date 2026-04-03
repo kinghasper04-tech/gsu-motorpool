@@ -8,6 +8,7 @@ import {
     Filter, Search, FileText, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { usePage } from '@inertiajs/react';
 
 export default function RequestManagement({ 
     auth, 
@@ -17,10 +18,13 @@ export default function RequestManagement({
     completedRequests,
     forwardedRequests,
     declinedRequests,
+    cancelledRequests,
     vehicles, 
     drivers 
 }) {
-    const [activeTab, setActiveTab] = useState('pending');
+    const { url } = usePage();
+    const initialTab = new URLSearchParams(url.split('?')[1] || '').get('tab') || 'pending';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedVehicle, setSelectedVehicle] = useState('all');
     const [selectedDriver, setSelectedDriver] = useState('all');
@@ -33,7 +37,8 @@ export default function RequestManagement({
         { id: 'approved', label: 'Approved', count: approvedRequests.length, color: 'green' },
         { id: 'completed', label: 'Completed', count: completedRequests.length, color: 'purple' },
         { id: 'forwarded', label: 'Forwarded for Decline', count: forwardedRequests.length, color: 'orange' },
-        { id: 'declined', label: 'Declined', count: declinedRequests.length, color: 'red' }
+        { id: 'declined', label: 'Declined', count: declinedRequests.length, color: 'red' },
+        { id: 'cancelled', label: 'Cancelled', count: cancelledRequests.length, color: 'gray' },
     ];
 
     const getCurrentRequests = () => {
@@ -44,6 +49,7 @@ export default function RequestManagement({
             case 'completed': return completedRequests;
             case 'forwarded': return forwardedRequests;
             case 'declined': return declinedRequests;
+            case 'cancelled': return cancelledRequests;
             default: return [];
         }
     };
@@ -118,6 +124,7 @@ export default function RequestManagement({
             approved: 'bg-green-100 text-green-800',
             completed: 'bg-purple-100 text-purple-800',
             declined: 'bg-red-100 text-red-800',
+            cancelled: 'bg-gray-100 text-gray-700',
         };
         
         return (
@@ -134,7 +141,8 @@ export default function RequestManagement({
             green: 'border-green-500 text-green-600',
             purple: 'border-purple-500 text-purple-600',
             orange: 'border-orange-500 text-orange-600',
-            red: 'border-red-500 text-red-600'
+            red: 'border-red-500 text-red-600',
+            gray: 'border-gray-500 text-gray-600',
         };
         return colors[color] || 'border-gray-500 text-gray-600';
     };
@@ -399,6 +407,7 @@ export default function RequestManagement({
                                                     {activeTab === 'completed' && `Completed on ${new Date(request.end_datetime).toLocaleDateString()}`}
                                                     {activeTab === 'declined' && request.declined_at && `Declined on ${new Date(request.declined_at).toLocaleDateString()}`}
                                                     {activeTab === 'forwarded' && request.updated_at && `Forwarded on ${new Date(request.updated_at).toLocaleDateString()}`}
+                                                    {activeTab === 'cancelled' && request.cancelled_at && `Cancelled on ${new Date(request.cancelled_at).toLocaleDateString()}`}
                                                 </div>
                                             </div>
 
@@ -457,6 +466,12 @@ export default function RequestManagement({
                                                     <div className="flex items-center gap-2 text-red-600">
                                                         <XCircle size={16} />
                                                         <span className="text-sm font-medium">Declined</span>
+                                                    </div>
+                                                )}
+
+                                                {activeTab === 'cancelled' && (
+                                                    <div className="mb-4 p-3 bg-gray-100 border border-gray-200 rounded-md">
+                                                        <span className="font-medium text-gray-700 text-sm">This request was cancelled by the client.</span>
                                                     </div>
                                                 )}
                                             </div>

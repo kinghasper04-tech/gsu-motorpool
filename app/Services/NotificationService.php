@@ -114,7 +114,7 @@ class NotificationService
                     'vehicle_plate' => $request->vehicle->plate_number,
                     'driver_name' => $request->driver->name,
                 ],
-                'action_url' => route('requests.index'),
+                'action_url' => route('requests.index') . '?tab=assigned',
                 'read' => false,
             ]);
 
@@ -149,7 +149,7 @@ class NotificationService
                         'approved_by' => $request->approver->name ?? 'Admin',
                         'approved_at' => $request->approved_at->format('Y-m-d H:i:s'),
                     ],
-                    'action_url' => route('requests.index'),
+                    'action_url' => route('requests.index') . '?tab=approved',
                     'read' => false,
                 ]);
 
@@ -186,7 +186,7 @@ class NotificationService
                         'declined_by' => $request->decliner->name ?? 'Admin',
                         'declined_at' => $request->declined_at->format('Y-m-d H:i:s'),
                     ],
-                    'action_url' => route('requests.index'),
+                    'action_url' => route('requests.index') . '?tab=declined',
                     'read' => false,
                 ]);
             }
@@ -201,6 +201,66 @@ class NotificationService
                 'request_id' => $request->id,
                 'action' => $action,
                 'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * CANCEL: Client cancels an assigned or approved request
+     * Notify: Assignment Admin (if assigned), All Admins (if approved)
+     */
+    public function notifyCancellation(VehicleRequest $request): void
+    {
+        try {
+            $roles = $request->status === VehicleRequest::STATUS_APPROVED
+                ? ['assignment_admin', 'approval_admin', 'ticket_admin']
+                : ['assignment_admin'];
+
+            $hasTicket = !is_null($request->trip_ticket_number);
+
+            $message = $hasTicket
+                ? "{$request->user->name} cancelled their vehicle request for {$request->destination} (Request #{$request->id}). Trip ticket #{$request->trip_ticket_number} has been voided."
+                : "{$request->user->name} cancelled their vehicle request for {$request->destination} (Request #{$request->id}). No trip ticket had been generated yet.";
+
+            $admins = User::whereIn('role', $roles)->get();
+
+            foreach ($admins as $admin) {
+                Notification::create([
+                    'user_id'    => $admin->id,
+                    'type'       => 'request_cancelled',
+                    'title'      => '🚫 Request Cancelled',
+                    'message'    => $message,
+                    'data'       => [
+                        'request_id'        => $request->id,
+                        'requester_name'    => $request->user->name,
+                        'destination'       => $request->destination,
+                        'cancelled_at'      => now()->format('Y-m-d H:i:s'),
+                        'prior_status'      => $request->status,
+                        'trip_ticket_number' => $request->trip_ticket_number,
+                        'has_ticket'        => $hasTicket,
+                    ],
+                    
+                    'action_url' => match($admin->role) {
+                        'assignment_admin' => route('assignment.requests.index') . '?tab=cancelled',
+                        'approval_admin'   => route('admin.requests.management') . '?tab=cancelled',
+                        'ticket_admin'     => route('tickets.pending-requests') . '?tab=cancelled',
+                        default            => route('assignment.requests.index') . '?tab=cancelled',
+                    },
+                    'read'       => false,
+                ]);
+            }
+
+            Log::info('Admins notified of request cancellation', [
+                'request_id'     => $request->id,
+                'prior_status'   => $request->status,
+                'has_ticket'     => $hasTicket,
+                'notified_count' => $admins->count(),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to notify admins of cancellation', [
+                'request_id' => $request->id,
+                'error'      => $e->getMessage(),
             ]);
         }
     }
@@ -226,7 +286,7 @@ class NotificationService
                         'destination' => $request->destination,
                         'forwarded_reason' => $request->forwarded_decline_reason,
                     ],
-                    'action_url' => route('admin.requests.management'),
+                    'action_url' => route('admin.requests.management') . '?tab=forwarded',
                     'read' => false,
                 ]);
             }
@@ -286,14 +346,14 @@ class NotificationService
 
     /**
      * 5. TICKET ADMIN GENERATES TRIP TICKET
-     * Notify: Client, Driver, Assignment Admin
+     * Notify: Assignment Admin
      */
     public function notifyTicketGenerated(VehicleRequest $vehicleRequest)
     {
         try {
-            $assignmentAdmins = User::where('role', 'assignment_admin')->get();
+            $assignmentAdmin = User::where('role', 'assignment_admin')->get();
             
-            foreach ($assignmentAdmins as $admin) {
+            foreach ($assignmentAdmin as $admin) {
                 Notification::create([
                     'user_id' => $admin->id,
                     'type' => 'ticket_generated',
@@ -315,7 +375,7 @@ class NotificationService
 
             Log::info('Assignment admins notified of ticket generation', [
                 'request_id' => $vehicleRequest->id,
-                'notified_count' => $assignmentAdmins->count()
+                'notified_count' => $assignmentAdmin->count()
             ]);
 
         } catch (\Exception $e) {

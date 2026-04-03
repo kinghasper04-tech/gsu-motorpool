@@ -191,7 +191,7 @@ export default function ApprovalPreviewModal({
                                             <div>
                                                 <span className="text-xs text-blue-700">Vehicle:</span>
                                                 <p className="font-medium text-blue-900">
-                                                    {request.vehicle?.model || 'Not assigned'}
+                                                    {request.vehicle?.description || 'Not assigned'}
                                                 </p>
                                                 <p className="text-sm text-blue-700">
                                                     {request.vehicle?.plate_number || ''}

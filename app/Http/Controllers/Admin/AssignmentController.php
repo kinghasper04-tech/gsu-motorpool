@@ -445,6 +445,11 @@ class AssignmentController extends Controller
             ->with(['user', 'vehicle', 'driver'])
             ->orderBy('declined_at', 'desc')
             ->get();
+        
+        $cancelledRequests = VehicleRequest::where('status', VehicleRequest::STATUS_CANCELLED)
+            ->with(['user', 'vehicle', 'driver'])
+            ->orderBy('cancelled_at', 'desc')
+            ->get();
 
         return Inertia::render('Assignment/RequestManagement', [
             'pendingRequests' => $pendingRequests,
@@ -453,6 +458,7 @@ class AssignmentController extends Controller
             'completedRequests' => $completedRequests,
             'forwardedRequests' => $forwardedRequests,
             'declinedRequests' => $declinedRequests,
+            'cancelledRequests' => $cancelledRequests,
             'vehicles' => Vehicle::all(),
             'drivers' => Driver::all(),
         ]);

@@ -50,6 +50,7 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/requests/{id}/edit', [RequestController::class, 'edit'])->name('client.requests.edit');
     Route::patch('/requests/{id}', [RequestController::class, 'update'])->name('client.requests.update');
     Route::delete('/requests/{id}', [RequestController::class, 'destroy'])->name('client.requests.destroy');
+    Route::patch('/requests/{id}/cancel', [RequestController::class, 'cancel'])->name('client.requests.cancel');
     
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
 });

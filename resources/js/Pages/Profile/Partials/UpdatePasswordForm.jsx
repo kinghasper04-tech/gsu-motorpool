@@ -46,25 +46,23 @@ export default function UpdatePasswordForm({ className = '' }) {
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
+            <header className="mb-5">
+                <h2 className="text-base font-semibold text-gray-900">
                     Update Password
                 </h2>
-
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-500">
                     Ensure your account is using a long, random password to stay
                     secure.
                 </p>
             </header>
 
-            <form onSubmit={updatePassword} className="mt-6 space-y-6">
-                 
+            <form onSubmit={updatePassword} className="space-y-5">
                 <div>
                     <InputLabel
                         htmlFor="current_password"
                         value="Current Password"
+                        className="text-xs font-medium uppercase tracking-wide text-gray-500"
                     />
-
                     <TextInput
                         id="current_password"
                         ref={currentPasswordInput}
@@ -76,65 +74,72 @@ export default function UpdatePasswordForm({ className = '' }) {
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                     />
-
                     <InputError
                         message={errors.current_password}
-                        className="mt-2"
+                        className="mt-1.5"
                     />
                 </div>
 
-                <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div>
+                        <InputLabel
+                            htmlFor="password"
+                            value="New Password"
+                            className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                        />
+                        <TextInput
+                            id="password"
+                            ref={passwordInput}
+                            value={data.password}
+                            onChange={(e) =>
+                                setData('password', e.target.value)
+                            }
+                            type="password"
+                            className="mt-1 block w-full"
+                            autoComplete="new-password"
+                        />
+                        <InputError
+                            message={errors.password}
+                            className="mt-1.5"
+                        />
+                    </div>
 
-                    <TextInput
-                        id="password"
-                        ref={passwordInput}
-                        value={data.password}
-                        onChange={(e) => setData('password', e.target.value)}
-                        type="password"
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
+                    <div>
+                        <InputLabel
+                            htmlFor="password_confirmation"
+                            value="Confirm New Password"
+                            className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                        />
+                        <TextInput
+                            id="password_confirmation"
+                            value={data.password_confirmation}
+                            onChange={(e) =>
+                                setData('password_confirmation', e.target.value)
+                            }
+                            type="password"
+                            className="mt-1 block w-full"
+                            autoComplete="new-password"
+                        />
+                        <InputError
+                            message={errors.password_confirmation}
+                            className="mt-1.5"
+                        />
+                    </div>
                 </div>
 
-                <div>
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        value={data.password_confirmation}
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        type="password"
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                <div className="flex items-center gap-4 border-t border-gray-100 pt-5">
+                    <PrimaryButton disabled={processing}>
+                        Update Password
+                    </PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
-                        enter="transition ease-in-out"
+                        enter="transition ease-in-out duration-300"
                         enterFrom="opacity-0"
-                        leave="transition ease-in-out"
+                        leave="transition ease-in-out duration-300"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
+                        <p className="text-sm text-green-600">Saved.</p>
                     </Transition>
                 </div>
             </form>

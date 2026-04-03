@@ -29,7 +29,7 @@ class RequestController extends Controller
         $validated = $request->validate([
             'destination' => 'required|string',
             'purpose' => 'required|string',
-            'authorized_passengers' => 'nullable|string',
+            'authorized_passengers' => 'required|string',
             'date_of_travel' => 'required|date',
             'days_of_travel' => 'required|numeric|min:0.5',
             'half_day_period' => 'nullable|in:morning,afternoon,full',
@@ -255,7 +255,7 @@ class RequestController extends Controller
         $validated = $request->validate([
             'destination' => 'required|string',
             'purpose' => 'required|string',
-            'authorized_passengers' => 'nullable|string',
+            'authorized_passengers' => 'required|string',
             'date_of_travel' => 'required|date',
             'days_of_travel' => 'required|numeric|min:0.5',
             'half_day_period' => 'nullable|in:morning,afternoon,full',
@@ -289,7 +289,7 @@ class RequestController extends Controller
         // Notify assignment admin
         app(NotificationService::class)->notifyAssignmentAdmin($vehicleRequest);
 
-        return redirect()->route('dashboard')->with('success', 'Vehicle request submitted successfully!');
+        return redirect()->route('requests.index')->with('success', 'Vehicle request submitted successfully!');
     }
 
     /**
@@ -333,12 +333,18 @@ class RequestController extends Controller
             ->orderBy('declined_at', 'desc')
             ->get();
 
+        $cancelledRequests = VehicleRequest::where('user_id', $userId)
+            ->where('status', VehicleRequest::STATUS_CANCELLED)
+            ->orderBy('cancelled_at', 'desc')
+            ->get();
+        
         return Inertia::render('Client/MyRequests', [
             'pendingRequests' => $pendingRequests,
             'assignedRequests' => $assignedRequests,
             'approvedRequests' => $approvedRequests,
             'completedRequests' => $completedRequests,
             'declinedRequests' => $declinedRequests,
+            'cancelledRequests' => $cancelledRequests,
         ]);
     }
 
@@ -356,7 +362,7 @@ class RequestController extends Controller
         $requestData = $request->validate([
             'purpose' => 'required|string|max:255',
             'destination' => 'required|string|max:255',
-            'authorized_passengers' => 'nullable|string|max:255',
+            'authorized_passengers' => 'required|string|max:255',
             'date_of_travel' => 'required|date',
             'days_of_travel' => 'required|numeric|min:0.5',
             'half_day_period' => 'nullable|in:morning,afternoon,full',
@@ -398,6 +404,35 @@ class RequestController extends Controller
         $requestModel->delete();
     
         return redirect()->route('requests.index')->with('success', 'Request deleted successfully.');
+    }
+
+    public function cancel($id)
+    {
+        $user = auth()->user();
+
+        $vehicleRequest = VehicleRequest::where('user_id', $user->id)->findOrFail($id);
+
+        $cancellableStatuses = [
+            VehicleRequest::STATUS_ASSIGNED,
+            VehicleRequest::STATUS_APPROVED,
+        ];
+
+        if (!in_array($vehicleRequest->status, $cancellableStatuses)) {
+            return redirect()->route('requests.index')
+                ->with('error', 'This request cannot be cancelled.');
+        }
+
+        // Fire notification before status changes so we can still read prior_status
+        app(NotificationService::class)->notifyCancellation($vehicleRequest);
+
+        $vehicleRequest->update([
+            'status'       => VehicleRequest::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+            'cancelled_by' => $user->id,
+        ]);
+
+        return redirect()->route('requests.index')
+            ->with('success', 'Request cancelled successfully.');
     }
     
     public function show($id)

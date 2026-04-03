@@ -68,65 +68,56 @@ class CalendarController extends Controller
      * Get requests based on user role
      */
     private function getRequestsForUser($user, $start = null, $end = null)
-    {
-        $query = VehicleRequest::with(['user', 'vehicle', 'driver', 'approver', 'decliner']);
+{
+    $query = VehicleRequest::with(['user', 'vehicle', 'driver', 'approver', 'decliner']);
 
-        // Apply role-based filtering
-        switch ($user->role) {
-            case 'client':
-                // Clients see their own APPROVED and COMPLETED requests only
-                $query->where('user_id', $user->id)
-                      ->whereIn('status', [
-                          VehicleRequest::STATUS_APPROVED,
-                          VehicleRequest::STATUS_COMPLETED
-                      ]);
-                break;
+    switch ($user->role) {
+        case 'client':
+            $query->where('user_id', $user->id)
+                  ->whereIn('status', [
+                      VehicleRequest::STATUS_APPROVED,
+                      VehicleRequest::STATUS_COMPLETED,
+                  ]);
+            break;
 
-            case 'assignment_admin':
-                // Assignment admins see ASSIGNED, APPROVED and COMPLETED requests
-                $query->whereIn('status', [
-                    VehicleRequest::STATUS_ASSIGNED,
-                    VehicleRequest::STATUS_APPROVED,
-                    VehicleRequest::STATUS_COMPLETED,
-                ]);
-                break;
+        case 'assignment_admin':
+        case 'approval_admin':
+            $query->whereIn('status', [
+                VehicleRequest::STATUS_ASSIGNED,
+                VehicleRequest::STATUS_APPROVED,
+                VehicleRequest::STATUS_COMPLETED,
+            ]);
+            break;
 
-            case 'approval_admin':
-                // Approval admins see ASSIGNED, APPROVED, and COMPLETED requests
-                $query->whereIn('status', [
-                    VehicleRequest::STATUS_ASSIGNED,
-                    VehicleRequest::STATUS_APPROVED,
-                    VehicleRequest::STATUS_COMPLETED,
-                ]);
-                break;
+        case 'ticket_admin':
+            $query->whereIn('status', [
+                VehicleRequest::STATUS_APPROVED,
+                VehicleRequest::STATUS_COMPLETED,
+            ]);
+            break;
 
-            case 'ticket_admin':
-                // Ticket admins see APPROVED and COMPLETED requests
-                $query->whereIn('status', [
-                    VehicleRequest::STATUS_APPROVED,
-                    VehicleRequest::STATUS_COMPLETED
-                ]);
-                break;
-
-            default:
-                // Default: no requests
-                $query->whereRaw('1 = 0');
-        }
-
-        // Apply date range filter if provided
-        if ($start && $end) {
-            $query->where(function ($q) use ($start, $end) {
-                $q->whereBetween('start_datetime', [$start, $end])
-                  ->orWhereBetween('end_datetime', [$start, $end])
-                  ->orWhere(function ($q) use ($start, $end) {
-                      $q->where('start_datetime', '<=', $start)
-                        ->where('end_datetime', '>=', $end);
-                  });
-            });
-        }
-
-        return $query->orderBy('start_datetime', 'asc')->get();
+        default:
+            $query->whereRaw('1 = 0');
     }
+
+    // Apply date range only to non-completed requests
+    // Completed trips are always shown regardless of date
+    if ($start && $end) {
+        $query->where(function ($q) use ($start, $end) {
+            $q->where('status', VehicleRequest::STATUS_COMPLETED) // always include completed
+              ->orWhere(function ($q2) use ($start, $end) {
+                  $q2->whereBetween('start_datetime', [$start, $end])
+                     ->orWhereBetween('end_datetime', [$start, $end])
+                     ->orWhere(function ($q3) use ($start, $end) {
+                         $q3->where('start_datetime', '<=', $start)
+                            ->where('end_datetime', '>=', $end);
+                     });
+              });
+        });
+    }
+
+    return $query->orderBy('start_datetime', 'asc')->get();
+}
 
     /**
      * Check if user can view specific request

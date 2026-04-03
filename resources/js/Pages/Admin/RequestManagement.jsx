@@ -15,7 +15,8 @@ export default function RequestManagement({
     forwardedRequests,
     approvedRequests,
     declinedRequests,
-    completedRequests
+    completedRequests,
+    cancelledRequests,
 }) {
     const { auth: pageAuth } = usePage().props;
     const [activeTab, setActiveTab] = useState('pending');
@@ -34,7 +35,8 @@ export default function RequestManagement({
         { id: 'forwarded', label: 'Forwarded for Decline', count: forwardedRequests.length, color: 'orange', icon: AlertCircle },
         { id: 'approved', label: 'Approved', count: approvedRequests.length, color: 'green', icon: CheckCircle2 },
         { id: 'declined', label: 'Declined', count: declinedRequests.length, color: 'red', icon: XCircle },
-        { id: 'completed', label: 'Completed', count: completedRequests.length, color: 'purple', icon: CheckCircle2 }
+        { id: 'completed', label: 'Completed', count: completedRequests.length, color: 'purple', icon: CheckCircle2 },
+        { id: 'cancelled', label: 'Cancelled', count: cancelledRequests.length, color: 'gray', icon: XCircle },
     ];
 
     const getCurrentRequests = () => {
@@ -44,6 +46,7 @@ export default function RequestManagement({
             case 'approved': return approvedRequests;
             case 'declined': return declinedRequests;
             case 'completed': return completedRequests;
+            case 'cancelled': return cancelledRequests;
             default: return [];
         }
     };
@@ -75,7 +78,8 @@ export default function RequestManagement({
             orange: 'border-orange-500 text-orange-600 bg-orange-50',
             green: 'border-green-500 text-green-600 bg-green-50',
             red: 'border-red-500 text-red-600 bg-red-50',
-            purple: 'border-purple-500 text-purple-600 bg-purple-50'
+            purple: 'border-purple-500 text-purple-600 bg-purple-50',
+            gray: 'border-gray-500 text-gray-600 bg-gray-50',
         };
         return colors[color] || 'border-gray-500 text-gray-600';
     };
@@ -86,7 +90,8 @@ export default function RequestManagement({
             orange: 'text-orange-600 hover:bg-orange-50',
             green: 'text-green-600 hover:bg-green-50',
             red: 'text-red-600 hover:bg-red-50',
-            purple: 'text-purple-600 hover:bg-purple-50'
+            purple: 'text-purple-600 hover:bg-purple-50',
+            gray: 'text-gray-600 hover:bg-gray-50',
         };
         return colors[color] || 'text-gray-600 hover:bg-gray-50';
     };
@@ -337,6 +342,12 @@ export default function RequestManagement({
                                                             Completed
                                                         </span>
                                                     )}
+                                                    {activeTab === 'cancelled' && (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                                            <XCircle size={12} className="mr-1" />
+                                                            Cancelled
+                                                        </span>
+                                                    )}
                                                 </div>
 
                                                 {/* User Department/Position */}
@@ -449,6 +460,12 @@ export default function RequestManagement({
                                                     </div>
                                                 )}
 
+                                                {activeTab === 'cancelled' && (
+                                                    <div className="mb-4 p-3 bg-gray-100 border border-gray-200 rounded-md">
+                                                        <span className="font-medium text-gray-700 text-sm">This request was cancelled by the client.</span>
+                                                    </div>
+                                                )}
+
                                                 {/* Timestamp Info */}
                                                 <div className="text-sm text-gray-500">
                                                     {activeTab === 'pending' && request.created_at && `Submitted on ${new Date(request.created_at).toLocaleDateString()}`}
@@ -456,6 +473,7 @@ export default function RequestManagement({
                                                     {activeTab === 'approved' && request.approved_at && `Approved on ${new Date(request.approved_at).toLocaleDateString()}`}
                                                     {activeTab === 'declined' && request.declined_at && `Declined on ${new Date(request.declined_at).toLocaleDateString()}`}
                                                     {activeTab === 'completed' && request.end_datetime && `Completed on ${new Date(request.end_datetime).toLocaleDateString()}`}
+                                                    {activeTab === 'cancelled' && request.cancelled_at && `Cancelled on ${new Date(request.cancelled_at).toLocaleDateString()}`}
                                                 </div>
                                             </div>
 
@@ -520,6 +538,13 @@ export default function RequestManagement({
                                                     <div className="flex items-center gap-2 text-purple-600">
                                                         <CheckCircle2 size={16} />
                                                         <span className="text-sm font-medium">Completed</span>
+                                                    </div>
+                                                )}
+
+                                                {activeTab === 'cancelled' && (
+                                                    <div className="flex items-center gap-2 text-gray-500">
+                                                        <XCircle size={16} />
+                                                        <span className="text-sm font-medium">Cancelled</span>
                                                     </div>
                                                 )}
                                             </div>

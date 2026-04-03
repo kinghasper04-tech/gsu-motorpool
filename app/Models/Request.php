@@ -17,6 +17,7 @@ class Request extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_DECLINED = 'declined';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
 
     // Half-day period constants
     const HALF_DAY_MORNING = 'morning';
@@ -48,6 +49,8 @@ class Request extends Model
         'ticket_generated_at',
         'ticket_sent_at',
         'ticket_sent_to',
+        'cancelled_at',
+        'cancelled_by',
     ];
 
     protected $casts = [
@@ -58,6 +61,7 @@ class Request extends Model
         'declined_at' => 'datetime',
         'ticket_generated_at' => 'datetime',
         'days_of_travel' => 'decimal:1',
+        'cancelled_at' => 'datetime',
     ];
 
     public function user()
@@ -159,5 +163,15 @@ class Request extends Model
             })
             ->whereIn('status', [self::STATUS_ASSIGNED, self::STATUS_APPROVED])
             ->exists();
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
+    }
+
+    public function canceller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 }

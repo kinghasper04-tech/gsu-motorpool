@@ -114,6 +114,8 @@ export default function NotificationsPage({ auth }) {
                 return '🎫';
             case 'trip_assigned':
                 return '🚗';
+            case 'request_cancelled':
+                return '🚫';
             default:
                 return '🔔';
         }

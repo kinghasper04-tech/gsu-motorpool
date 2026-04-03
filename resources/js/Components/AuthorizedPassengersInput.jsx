@@ -27,7 +27,7 @@ export default function AuthorizedPassengersInput({ passengers, onChange, error 
     return (
         <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-                Authorized Passengers
+                Authorized Passengers <span className="text-red-500">*</span>
             </label>
 
             {/* Input field for adding passengers */}
@@ -86,8 +86,10 @@ export default function AuthorizedPassengersInput({ passengers, onChange, error 
 
             {/* Hint */}
             {passengers.length === 0 && (
-                <p className="text-sm text-gray-500 mt-1">
-                    Press Enter or click Add button to add a passenger.
+                <p className={`text-sm mt-1 ${error ? 'text-red-500' : 'text-gray-500'}`}>
+                    {error
+                        ? 'At least one passenger is required.'
+                        : 'Press Enter or click Add to add a passenger.'}
                 </p>
             )}
         </div>

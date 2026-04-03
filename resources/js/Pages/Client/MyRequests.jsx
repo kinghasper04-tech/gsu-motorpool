@@ -8,6 +8,7 @@ import {
 import { format } from 'date-fns';
 import RequestDetailModal from '@/Components/RequestDetailModal';
 import { Eye } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 
 export default function MyRequests({ 
     auth, 
@@ -15,9 +16,12 @@ export default function MyRequests({
     assignedRequests, 
     approvedRequests,
     completedRequests,
-    declinedRequests
+    declinedRequests,
+    cancelledRequests
 }) {
-    const [activeTab, setActiveTab] = useState('pending');
+    const { url } = usePage();
+    const initialTab = new URLSearchParams(url.split('?')[1] || '').get('tab') || 'pending';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -27,7 +31,8 @@ export default function MyRequests({
         { id: 'assigned', label: 'Assigned', count: assignedRequests.length, color: 'blue' },
         { id: 'approved', label: 'Approved', count: approvedRequests.length, color: 'green' },
         { id: 'completed', label: 'Completed', count: completedRequests.length, color: 'purple' },
-        { id: 'declined', label: 'Declined', count: declinedRequests.length, color: 'red' }
+        { id: 'declined', label: 'Declined', count: declinedRequests.length, color: 'red' },
+        { id: 'cancelled', label: 'Cancelled', count: cancelledRequests.length, color: 'gray' },
     ];
 
     const getCurrentRequests = () => {
@@ -37,6 +42,7 @@ export default function MyRequests({
             case 'approved': return approvedRequests;
             case 'completed': return completedRequests;
             case 'declined': return declinedRequests;
+            case 'cancelled': return cancelledRequests;
             default: return [];
         }
     };
@@ -76,6 +82,12 @@ export default function MyRequests({
         }
     };
 
+    const handleCancel = (requestId) => {
+        if (confirm('Are you sure you want to cancel this request? This cannot be undone.')) {
+            router.patch(route('client.requests.cancel', requestId));
+        }
+    };
+
     const getStatusBadge = (status) => {
         const badges = {
             pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
@@ -83,6 +95,7 @@ export default function MyRequests({
             approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
             completed: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Completed' },
             declined: { bg: 'bg-red-100', text: 'text-red-800', label: 'Declined' },
+            cancelled: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Cancelled' },
         };
         
         const badge = badges[status] || badges.pending;
@@ -100,7 +113,8 @@ export default function MyRequests({
             yellow: 'border-yellow-500 text-yellow-600',
             green: 'border-green-500 text-green-600',
             purple: 'border-purple-500 text-purple-600',
-            red: 'border-red-500 text-red-600'
+            red: 'border-red-500 text-red-600',
+            gray: 'border-gray-500 text-gray-600',
         };
         return colors[color] || 'border-gray-500 text-gray-600';
     };
@@ -111,7 +125,8 @@ export default function MyRequests({
             completed: 'border-purple-200',
             declined: 'border-red-200',
             assigned: 'border-blue-200',
-            pending: 'border-gray-200'
+            pending: 'border-gray-200',
+            cancelled: 'border-gray-200',
         };
         return colors[activeTab] || 'border-gray-200';
     };
@@ -122,7 +137,8 @@ export default function MyRequests({
             completed: 'bg-gradient-to-r from-purple-400 to-purple-500',
             declined: 'bg-gradient-to-r from-red-400 to-red-500',
             assigned: 'bg-gradient-to-r from-blue-400 to-blue-500',
-            pending: 'bg-gradient-to-r from-yellow-400 to-yellow-500'
+            pending: 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+            cancelled: 'bg-gradient-to-r from-gray-400 to-gray-500',
         };
         return colors[activeTab] || 'bg-gradient-to-r from-yellow-400 to-yellow-500';
     };
@@ -133,7 +149,8 @@ export default function MyRequests({
             completed: 'bg-purple-50',
             declined: 'bg-red-50',
             assigned: 'bg-blue-50',
-            pending: 'bg-yellow-50'
+            pending: 'bg-yellow-50',
+            cancelled: 'bg-gray-50',
         };
         return colors[activeTab] || 'bg-yellow-50';
     };
@@ -144,7 +161,8 @@ export default function MyRequests({
             completed: 'text-purple-600',
             declined: 'text-red-600',
             assigned: 'text-blue-600',
-            pending: 'text-yellow-600'
+            pending: 'text-yellow-600',
+            cancelled: 'text-gray-600'
         };
         return colors[activeTab] || 'text-yellow-600';
     };
@@ -291,6 +309,19 @@ export default function MyRequests({
                 
                 {/* Action Buttons */}
                 <div className="mt-4 flex justify-end space-x-2">
+                    
+                    {(activeTab === 'assigned' || activeTab === 'approved') && (
+                        <div className="ml-2">
+                            <button
+                                onClick={() => handleCancel(request.id)}
+                                className="px-3 py-1 bg-red-600 hover:bg-orange-700 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-1"
+                                title="Cancel request"
+                            >
+                                <XCircle className="w-4 h-4" />
+                                <p>Cancel Request</p>
+                            </button>
+                        </div>
+                    )}
                     <button
                         onClick={() => openDetailModal(request)}
                         className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-1"
@@ -334,6 +365,15 @@ export default function MyRequests({
                         <CheckCircle className="w-5 h-5 text-purple-600" />
                         <p className="text-sm font-medium text-purple-900">
                             This trip has been completed
+                        </p>
+                    </div>
+                )}
+
+                {activeTab === 'cancelled' && (
+                    <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <XCircle className="w-5 h-5 text-gray-500" />
+                        <p className="text-sm font-medium text-gray-700">
+                            This request was cancelled
                         </p>
                     </div>
                 )}

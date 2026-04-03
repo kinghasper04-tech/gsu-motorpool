@@ -53,6 +53,11 @@ class ApprovalController extends Controller
             ->with(['user', 'vehicle', 'driver', 'assignment'])
             ->orderBy('updated_at', 'desc')
             ->get();
+        
+        $cancelledRequests = VehicleRequest::where('status', VehicleRequest::STATUS_CANCELLED)
+            ->with(['user', 'vehicle', 'driver'])
+            ->orderBy('cancelled_at', 'desc')
+            ->get();
 
         return Inertia::render('Admin/RequestManagement', [
             'pendingRequests' => $pendingRequests,
@@ -60,6 +65,7 @@ class ApprovalController extends Controller
             'approvedRequests' => $approvedRequests,
             'declinedRequests' => $declinedRequests,
             'completedRequests' => $completedRequests,
+            'cancelledRequests' => $cancelledRequests,
         ]);
     }
 

@@ -51,10 +51,12 @@ class TicketController extends Controller
             ->count();
 
         $totalTickets = Request::whereNotNull('trip_ticket_number')
+            ->where('status', '!=', Request::STATUS_CANCELLED)
             ->count();
 
         // Pending queue (10 oldest approved requests without tickets - FIFO)
         $pendingQueue = Request::where('status', Request::STATUS_APPROVED)
+            ->where('status', '!=', Request::STATUS_CANCELLED)
             ->whereNull('trip_ticket_number')
             ->with(['user', 'vehicle', 'driver'])
             ->orderBy('approved_at', 'asc')
@@ -78,6 +80,7 @@ class TicketController extends Controller
 
         // Recent tickets (last 7 generated tickets)
         $recentTickets = Request::where('status', Request::STATUS_APPROVED)
+            ->where('status', '!=', Request::STATUS_CANCELLED)
             ->whereNotNull('trip_ticket_number')
             ->with(['user', 'vehicle', 'driver'])
             ->orderBy('ticket_generated_at', 'desc')
@@ -98,6 +101,7 @@ class TicketController extends Controller
 
         // Upcoming trips with tickets (next 5 trips)
         $upcomingTrips = Request::where('status', Request::STATUS_APPROVED)
+            ->where('status', '!=', Request::STATUS_CANCELLED)
             ->whereNotNull('trip_ticket_number')
             ->where('start_datetime', '>=', now())
             ->with(['user', 'vehicle', 'driver'])
@@ -144,9 +148,14 @@ class TicketController extends Controller
 
         // All requests that have trip ticket numbers (for "List of All Tickets" tab)
         $allTickets = Request::with(['driver', 'vehicle', 'user'])
-            ->where('status', Request::STATUS_APPROVED)
+            ->whereIn('status', [Request::STATUS_APPROVED, Request::STATUS_COMPLETED])
             ->whereNotNull('trip_ticket_number')
             ->orderBy('trip_ticket_number', 'asc')
+            ->get();
+
+        $cancelledRequests = Request::with(['driver', 'vehicle', 'user'])
+            ->where('status', Request::STATUS_CANCELLED)
+            ->orderBy('cancelled_at', 'desc')
             ->get();
 
         // Get preview request from session if exists
@@ -168,6 +177,7 @@ class TicketController extends Controller
             'allTickets' => $allTickets,
             'previewRequest' => $previewRequest,
             'createdTripTicket' => $createdTripTicket,
+            'cancelledRequests' => $cancelledRequests,
         ]);
     }
 

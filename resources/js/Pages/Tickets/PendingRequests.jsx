@@ -7,9 +7,12 @@ import TripTicketViewModal from "@/Components/TripTicketViewModal";
 import CreateTripTicketModal from "@/Components/CreateTripTicketModal";
 import { format } from "date-fns";
 import { FileText, Clock, CheckCircle, Plus, X, Download, Loader2 } from "lucide-react";
+import { usePage } from '@inertiajs/react';
 
-export default function PendingRequests({ pendingRequests = [], allTickets = [], previewRequest: initialPreviewRequest = null, createdTripTicket: initialCreatedTicket = null }) {
-    const [activeTab, setActiveTab] = useState('pending');
+export default function PendingRequests({ pendingRequests = [], allTickets = [], cancelledRequests = [], previewRequest: initialPreviewRequest = null, createdTripTicket: initialCreatedTicket = null }) {
+    const { url } = usePage();
+    const initialTab = new URLSearchParams(url.split('?')[1] || '').get('tab') || 'pending';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -338,7 +341,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
             <table className="min-w-full w-full table-auto">
                 <thead>
                     <tr className="bg-gray-50 text-left">
-                        {activeTab === 'all' && (
+                        {(activeTab === 'all' || activeTab === 'cancelled') && (
                             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                 Trip Ticket #
                             </th>
@@ -358,6 +361,11 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                             Travel Date & Time
                         </th>
+                        {activeTab === 'cancelled' && (
+                            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                                Cancelled At
+                            </th>
+                        )}
                         {showActions && (
                             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                 Actions
@@ -368,7 +376,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                 <tbody className="divide-y divide-gray-200">
                     {requests.length === 0 ? (
                         <tr>
-                            <td colSpan={activeTab === 'all' ? 6 : 6} className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan={activeTab === 'cancelled' ? 7 : activeTab === 'all' ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
                                 <div className="flex flex-col items-center justify-center">
                                     <FileText className="w-12 h-12 mb-2 text-gray-400" />
                                     <p>No requests found</p>
@@ -377,10 +385,15 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                         </tr>
                     ) : (
                         requests.map((request) => (
-                            <tr key={request.id} className="hover:bg-gray-50">
-                                {activeTab === 'all' && (
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
-                                        {request.trip_ticket_number}
+                            <tr key={request.id} className={`hover:bg-gray-50 ${activeTab === 'cancelled' ? 'bg-gray-50 opacity-75' : ''}`}>
+                                {(activeTab === 'all' || activeTab === 'cancelled') && (
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
+                                        {request.trip_ticket_number
+                                            ? activeTab === 'cancelled'
+                                                ? <span className="line-through text-gray-400">{request.trip_ticket_number}</span>
+                                                : <span className="text-blue-600">{request.trip_ticket_number}</span>
+                                            : <span className="text-gray-400">No ticket</span>
+                                        }
                                     </td>
                                 )}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -399,6 +412,14 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     <div>{formatDate(request.date_of_travel)}</div>
                                     <div className="text-xs text-gray-500">{formatTime(request.time_of_travel)}</div>
                                 </td>
+                                {activeTab === 'cancelled' && (
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {request.cancelled_at
+                                            ? format(new Date(request.cancelled_at), 'MMM d, yyyy h:mm a')
+                                            : '—'
+                                        }
+                                    </td>
+                                )}
                                 {showActions && (
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {activeTab === 'pending' ? (
@@ -509,6 +530,25 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     </span>
                                 </div>
                             </button>
+
+                            <button
+                                onClick={() => setActiveTab('cancelled')}
+                                className={`
+                                    py-4 px-6 text-sm font-medium border-b-2 transition-colors
+                                    ${activeTab === 'cancelled'
+                                        ? 'border-gray-500 text-gray-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }
+                                `}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <X className="w-4 h-4" />
+                                    <span>Cancelled</span>
+                                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                        {cancelledRequests.length}
+                                    </span>
+                                </div>
+                            </button>
                         </nav>
                     </div>
                 </div>
@@ -613,6 +653,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                 <div className="mt-0">
                     {activeTab === 'pending' && renderTable(pendingRequests)}
                     {activeTab === 'all' && renderTable(sortedTickets)}
+                    {activeTab === 'cancelled' && renderTable(cancelledRequests, false)}
                 </div>
             </div>
 

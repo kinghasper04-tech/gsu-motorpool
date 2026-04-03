@@ -73,6 +73,23 @@ export default function RequestDetailModal({ isOpen, onClose, request }) {
         ];
     };
 
+    const getCancelledSteps = () => {
+        return [
+            { 
+                id: 'pending', 
+                label: 'Pending', 
+                icon: AlertCircle,
+                description: 'Request submitted'
+            },
+            { 
+                id: 'cancelled', 
+                label: 'Cancelled', 
+                icon: XCircle,
+                description: 'Request cancelled'
+            }
+        ];
+    };
+
     const getCurrentStepIndex = () => {
         const statusOrder = ['pending', 'assigned', 'approved', 'completed'];
         return statusOrder.indexOf(request.status);
@@ -85,13 +102,23 @@ export default function RequestDetailModal({ isOpen, onClose, request }) {
             return 'upcoming';
         }
 
+        if (request.status === 'cancelled') {
+            if (stepId === 'pending') return 'completed';
+            if (stepId === 'cancelled') return 'current';
+            return 'upcoming';
+        }
+
         const currentIndex = getCurrentStepIndex();
         if (index < currentIndex) return 'completed';
         if (index === currentIndex) return 'current';
         return 'upcoming';
     };
 
-    const steps = request.status === 'declined' ? getDeclinedSteps() : getStatusSteps();
+    const steps = request.status === 'declined' 
+        ? getDeclinedSteps() 
+        : request.status === 'cancelled'
+        ? getCancelledSteps()
+        : getStatusSteps();
 
     const ProgressBar = () => (
         <div className="relative">
@@ -99,10 +126,10 @@ export default function RequestDetailModal({ isOpen, onClose, request }) {
             <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200" style={{ zIndex: 0 }}>
                 <div 
                     className={`h-full transition-all duration-500 ${
-                        request.status === 'declined' ? 'bg-red-500' : 'bg-green-500'
+                        request.status === 'declined' ? 'bg-red-500' : request.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
                     }`}
                     style={{ 
-                        width: request.status === 'declined' 
+                        width: request.status === 'declined' || request.status === 'cancelled'
                             ? '50%' 
                             : `${(getCurrentStepIndex() / (steps.length - 1)) * 100}%` 
                     }}
@@ -123,10 +150,14 @@ export default function RequestDetailModal({ isOpen, onClose, request }) {
                                     status === 'completed'
                                         ? request.status === 'declined'
                                             ? 'bg-red-500 border-red-500'
+                                            : request.status === 'cancelled'
+                                            ? 'bg-gray-400 border-gray-400'
                                             : 'bg-green-500 border-green-500'
                                         : status === 'current'
                                         ? request.status === 'declined'
                                             ? 'bg-red-500 border-red-500 ring-4 ring-red-100'
+                                            : request.status === 'cancelled'
+                                            ? 'bg-gray-400 border-gray-400 ring-4 ring-gray-100'
                                             : 'bg-blue-500 border-blue-500 ring-4 ring-blue-100'
                                         : 'bg-white border-gray-300'
                                 }`}
@@ -350,6 +381,14 @@ export default function RequestDetailModal({ isOpen, onClose, request }) {
                                             <span className="text-sm text-gray-600">Declined</span>
                                             <span className="text-sm font-medium text-gray-900">
                                                 {formatDate(request.declined_at)} at {formatDateTime(request.declined_at)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {request.cancelled_at && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Cancelled</span>
+                                            <span className="text-sm font-medium text-gray-900">
+                                                {formatDate(request.cancelled_at)} at {formatDateTime(request.cancelled_at)}
                                             </span>
                                         </div>
                                     )}

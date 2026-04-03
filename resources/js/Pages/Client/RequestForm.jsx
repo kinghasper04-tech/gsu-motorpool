@@ -12,8 +12,7 @@ export default function RequestForm() {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewUrl, setPreviewUrl] = useState('');
     const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
-    
-    // Store passengers as array in local state
+
     const [passengers, setPassengers] = useState([]);
 
     const { data, setData, post, processing, errors, clearErrors } = useForm({
@@ -26,13 +25,11 @@ export default function RequestForm() {
         time_of_travel: '',
     });
 
-    // Update the form data when passengers array changes
     const handlePassengersChange = (newPassengers) => {
         setPassengers(newPassengers);
         setData('authorized_passengers', newPassengers.join(', '));
     };
 
-    // Check if days_of_travel requires half_day_period
     const requiresHalfDayPeriod = () => {
         const days = parseFloat(data.days_of_travel);
         return !isNaN(days) && days % 1 !== 0;
@@ -41,8 +38,6 @@ export default function RequestForm() {
     const handleDaysChange = (e) => {
         const value = e.target.value;
         setData('days_of_travel', value);
-        
-        // Clear half_day_period if not needed
         const days = parseFloat(value);
         if (!isNaN(days) && days % 1 === 0) {
             setData('half_day_period', '');
@@ -51,26 +46,24 @@ export default function RequestForm() {
 
     const handlePreview = async (e) => {
         e.preventDefault();
-        
         clearErrors();
 
-        // Check if all required fields are filled
         const requiredFields = [
             'destination',
-            'purpose', 
+            'purpose',
+            'authorized_passengers',
             'date_of_travel',
             'days_of_travel',
-            'time_of_travel'
+            'time_of_travel',
         ];
 
-        const missingFields = requiredFields.filter(field => !data[field]);
-        
+        const missingFields = requiredFields.filter((field) => !data[field]);
+
         if (missingFields.length > 0) {
             alert('Please fill in all required fields before previewing.');
             return;
         }
 
-        // Check if half_day_period is required but missing
         if (requiresHalfDayPeriod() && !data.half_day_period) {
             alert('Please select morning or afternoon for half-day requests.');
             return;
@@ -80,14 +73,10 @@ export default function RequestForm() {
 
         try {
             const params = new URLSearchParams();
-            Object.keys(data).forEach(key => {
-                if (data[key]) {
-                    params.append(key, data[key]);
-                }
+            Object.keys(data).forEach((key) => {
+                if (data[key]) params.append(key, data[key]);
             });
-            
-            const url = `/request/preview?${params.toString()}`;
-            setPreviewUrl(url);
+            setPreviewUrl(`/request/preview?${params.toString()}`);
             setIsPreviewModalOpen(true);
         } catch (error) {
             console.error('Error generating preview:', error);
@@ -99,13 +88,11 @@ export default function RequestForm() {
 
     const handleConfirmSubmit = () => {
         post('/request', {
-            onSuccess: () => {
-                setIsPreviewModalOpen(false);
-            },
+            onSuccess: () => setIsPreviewModalOpen(false),
             onError: (errors) => {
                 setIsPreviewModalOpen(false);
                 console.error('Submission errors:', errors);
-            }
+            },
         });
     };
 
@@ -116,126 +103,149 @@ export default function RequestForm() {
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Request Vehicle</h2>}
+            header={
+                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                    Request Vehicle
+                </h2>
+            }
         >
             <Head title="Request Vehicle" />
 
-            <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gray-100 px-4">
-                <div className="w-full max-w-3xl bg-white shadow rounded-xl p-6 overflow-y-auto max-h-[90vh]">
-                    <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Request for Use of Vehicle</h1>
+            <div className="py-2 px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto w-full max-w-8xl bg-white shadow rounded-xl p-6">
+                    <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+                        REQUEST FOR USE OF VEHICLE
+                    </h1>
 
-                    <form onSubmit={handlePreview} className="space-y-4">
-                         
-                        {/* Destination */}
-                        <div>
-                            <InputLabel htmlFor="destination" required>Destination</InputLabel>
-                            <TextInput
-                                id="destination"
-                                value={data.destination}
-                                onChange={(e) => setData('destination', e.target.value)}
-                                className="mt-1 block w-full"
-                                required
-                            />
-                            <InputError message={errors.destination} />
-                        </div>
+                    <form onSubmit={handlePreview}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-8 gap-y-0">
 
-                        {/* Purpose */}
-                        <div>
-                            <InputLabel htmlFor="purpose" required>Purpose</InputLabel>
-                            <textarea
-                                id="purpose"
-                                value={data.purpose}
-                                onChange={(e) => setData('purpose', e.target.value)}
-                                className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                rows="3"
-                                required
-                            />
-                            <InputError message={errors.purpose} />
-                        </div>
+                            {/* ── LEFT COLUMN ── */}
+                            <div className="space-y-4">
 
-                        {/* Authorized Passengers */}
-                        <AuthorizedPassengersInput
-                            passengers={passengers}
-                            onChange={handlePassengersChange}
-                            error={errors.authorized_passengers}
-                        />
+                                {/* Destination */}
+                                <div>
+                                    <InputLabel htmlFor="destination">
+                                        Destination <span className="text-red-500">*</span>
+                                    </InputLabel>
+                                    <TextInput
+                                        id="destination"
+                                        value={data.destination}
+                                        onChange={(e) => setData('destination', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        required
+                                    />
+                                    <InputError message={errors.destination} />
+                                </div>
 
-                        {/* Date of Travel */}
-                        <div>
-                            <InputLabel htmlFor="date_of_travel" required>Date of Travel</InputLabel>
-                            <TextInput
-                                id="date_of_travel"
-                                type="date"
-                                value={data.date_of_travel}
-                                onChange={(e) => setData('date_of_travel', e.target.value)}
-                                className="mt-1 block w-full"
-                                min={new Date().toISOString().split('T')[0]}
-                                required
-                            />
-                            <InputError message={errors.date_of_travel} />
-                        </div>
+                                {/* Purpose */}
+                                <div>
+                                    <InputLabel htmlFor="purpose">
+                                        Purpose <span className="text-red-500">*</span>
+                                    </InputLabel>
+                                    <textarea
+                                        id="purpose"
+                                        value={data.purpose}
+                                        onChange={(e) => setData('purpose', e.target.value)}
+                                        className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        rows="4"
+                                        required
+                                    />
+                                    <InputError message={errors.purpose} />
+                                </div>
 
-                        {/* Travel Duration Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Days of Travel */}
-                            <div>
-                                <InputLabel htmlFor="days_of_travel" required>Days of travel</InputLabel>
-                                <TextInput
-                                    id="days_of_travel"
-                                    type="number"
-                                    step="0.5"
-                                    value={data.days_of_travel}
-                                    onChange={handleDaysChange}
-                                    className="mt-1 block w-full"
-                                    min="0.5"
-                                    required
+                                {/* Authorized Passengers */}
+                                <AuthorizedPassengersInput
+                                    passengers={passengers}
+                                    onChange={handlePassengersChange}
+                                    error={errors.authorized_passengers}
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Enter 0.5 for half-day, 1 for full day, 1.5 for day and half, etc.
-                                </p>
-                                <InputError message={errors.days_of_travel} />
                             </div>
 
-                            {/* Half-Day Period (conditionally shown) */}
-                            {requiresHalfDayPeriod() && (
+                            {/* ── RIGHT COLUMN ── */}
+                            <div className="space-y-4 mt-6 md:mt-0">
+
+                                {/* Date of Travel */}
                                 <div>
-                                    <InputLabel htmlFor="half_day_period" required>
-                                        Half-Day Period
+                                    <InputLabel htmlFor="date_of_travel">
+                                        Date of Travel <span className="text-red-500">*</span>
                                     </InputLabel>
-                                    <select
-                                        id="half_day_period"
-                                        value={data.half_day_period}
-                                        onChange={(e) => setData('half_day_period', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    <TextInput
+                                        id="date_of_travel"
+                                        type="date"
+                                        value={data.date_of_travel}
+                                        onChange={(e) => setData('date_of_travel', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        min={new Date().toISOString().split('T')[0]}
                                         required
-                                    >
-                                        <option value="">Select Period</option>
-                                        <option value="morning">Morning (until 12 PM)</option>
-                                        <option value="afternoon">Afternoon (until 5 PM)</option>
-                                    </select>
-                                    <InputError message={errors.half_day_period} />
+                                    />
+                                    <InputError message={errors.date_of_travel} />
                                 </div>
-                            )}
+
+                                {/* Days of Travel */}
+                                <div>
+                                    <InputLabel htmlFor="days_of_travel">
+                                        Days of Travel <span className="text-red-500">*</span>
+                                    </InputLabel>
+                                    <TextInput
+                                        id="days_of_travel"
+                                        type="number"
+                                        step="0.5"
+                                        min="0.5"
+                                        value={data.days_of_travel}
+                                        onChange={handleDaysChange}
+                                        className="mt-1 block w-full"
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Enter 0.5 for half-day, 1 for full day, 1.5 for day and a half, etc.
+                                    </p>
+                                    <InputError message={errors.days_of_travel} />
+                                </div>
+
+                                {/* Half-Day Period (conditional) */}
+                                {requiresHalfDayPeriod() && (
+                                    <div>
+                                        <InputLabel htmlFor="half_day_period">
+                                            Half-Day Period <span className="text-red-500">*</span>
+                                        </InputLabel>
+                                        <select
+                                            id="half_day_period"
+                                            value={data.half_day_period}
+                                            onChange={(e) => setData('half_day_period', e.target.value)}
+                                            className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                            required
+                                        >
+                                            <option value="">Select Period</option>
+                                            <option value="morning">Morning (until 12 PM)</option>
+                                            <option value="afternoon">Afternoon (until 5 PM)</option>
+                                        </select>
+                                        <InputError message={errors.half_day_period} />
+                                    </div>
+                                )}
+
+                                {/* Time of Travel */}
+                                <div>
+                                    <InputLabel htmlFor="time_of_travel">
+                                        Time of Travel <span className="text-red-500">*</span>
+                                    </InputLabel>
+                                    <TextInput
+                                        id="time_of_travel"
+                                        type="time"
+                                        value={data.time_of_travel}
+                                        onChange={(e) => setData('time_of_travel', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        required
+                                    />
+                                    <InputError message={errors.time_of_travel} />
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Time of Travel */}
-                        <div>
-                            <InputLabel htmlFor="time_of_travel" required>Time of Travel</InputLabel>
-                            <TextInput
-                                id="time_of_travel"
-                                type="time"
-                                value={data.time_of_travel}
-                                onChange={(e) => setData('time_of_travel', e.target.value)}
-                                className="mt-1 block w-full"
-                                required
-                            />
-                            <InputError message={errors.time_of_travel} />
-                        </div>
-
-                        {/* Info Message */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                        {/* Note */}
+                        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-md p-4">
                             <p className="text-sm text-blue-800">
-                                <strong>Note:</strong> After clicking "Preview Request", you'll be able to review 
+                                <strong>Note:</strong> After clicking "Preview Request", you'll be able to review
                                 your request form before final submission.
                             </p>
                         </div>
@@ -262,7 +272,6 @@ export default function RequestForm() {
                 </div>
             </div>
 
-            {/* Preview Modal */}
             <RequestPreviewModal
                 isOpen={isPreviewModalOpen}
                 closeModal={closePreviewModal}
