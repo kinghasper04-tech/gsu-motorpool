@@ -619,6 +619,47 @@ class AssignmentController extends Controller
         ]);
     }
 
+    private function formatDateRangeForPdf(Carbon $from, Carbon $to, ?string $halfDayPeriod): string
+    {
+        // Same day
+        if ($from->isSameDay($to)) {
+            return $from->format('F j, Y');
+        }
+ 
+        // Same month and year
+        if ($from->month === $to->month && $from->year === $to->year) {
+            return $from->format('F j') . ' - ' . $to->format('j, Y');
+        }
+
+        // Same year, different month
+        if ($from->year === $to->year) {
+            return $from->format('F j') . ' - ' . $to->format('F j, Y');
+        }
+
+        // Different year
+        return $from->format('F j, Y') . ' - ' . $to->format('F j, Y');
+    }
+ 
+    /**
+     * Derive the end calendar date from stored request data.
+     * Mirrors calculateDateTimeRange() so it is always consistent.
+     */
+    private function deriveEndDate(Carbon $dateOfTravel, float $daysOfTravel, ?string $halfDayPeriod): Carbon
+    {
+        $hasHalfDay = fmod($daysOfTravel, 1) !== 0.0;
+ 
+        if ($hasHalfDay) {
+            $wholeDays = (int) floor($daysOfTravel);
+            $end = $dateOfTravel->copy();
+            if ($wholeDays > 0) {
+                $end->addDays($wholeDays);
+            }
+            return $end;
+        }
+ 
+        return $dateOfTravel->copy()->addDays((int) $daysOfTravel - 1);
+    }
+
     /**
      * Generate Assignment Confirmation PDF
      */
@@ -653,11 +694,22 @@ class AssignmentController extends Controller
         $pdf->Write(0, $request->id);
 
         // Date of Travel
+        $endDate      = $this->deriveEndDate(
+            $request->date_of_travel,
+            (float) $request->days_of_travel,
+            $request->half_day_period
+        );
+        $dateRangeStr = $this->formatDateRangeForPdf(
+            $request->date_of_travel,
+            $endDate,
+            $request->half_day_period
+        );
+ 
         $pdf->SetXY(55, 140);
-        $pdf->Write(0, $request->date_of_travel->format('F d, Y'));
+        $pdf->Write(0, $dateRangeStr);
 
         // Days of Travel (with half-day period if applicable)
-        $pdf->SetXY(58, 148);
+        $pdf->SetXY(58, 147.5);
         $pdf->Write(0, $request->getFormattedDuration());
 
         // Time of Travel
@@ -692,11 +744,11 @@ class AssignmentController extends Controller
         // Assigned Vehicle
         $pdf->SetFont('BookOS', '', 10);
         $pdf->SetXY(148, 191.5);
-        $pdf->MultiCell(56, 4, $vehicle->description . ' - ' . $vehicle->plate_number, 0, 'L');
+        $pdf->MultiCell(56, 4, $vehicle->description, 0, 'L');
 
         // Assigned Driver
         $pdf->SetXY(39, 194);
-        $pdf->Write(0, $driver->name . ' - ' . $driver->contact_number);
+        $pdf->Write(0, $driver->name);
 
         // Requestor Signature
         $pdf->SetFont('BookOS', 'I', 11);

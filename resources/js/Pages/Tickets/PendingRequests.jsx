@@ -9,10 +9,11 @@ import { format } from "date-fns";
 import { FileText, Clock, CheckCircle, Plus, X, Download, Loader2 } from "lucide-react";
 import { usePage } from '@inertiajs/react';
 
-export default function PendingRequests({ pendingRequests = [], allTickets = [], cancelledRequests = [], previewRequest: initialPreviewRequest = null, createdTripTicket: initialCreatedTicket = null }) {
+export default function PendingRequests({ pendingRequests = [], allTickets = [], completedTickets = [], cancelledRequests = [], previewRequest: initialPreviewRequest = null, createdTripTicket: initialCreatedTicket = null }) {
     const { url } = usePage();
     const initialTab = new URLSearchParams(url.split('?')[1] || '').get('tab') || 'pending';
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [activeSubTab, setActiveSubTab] = useState('active');
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -37,12 +38,12 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
     // Get available years from tickets
     const availableYears = React.useMemo(() => {
         const years = new Set();
-        allTickets.forEach(ticket => {
+        [...allTickets, ...completedTickets, ...cancelledRequests].forEach(ticket => {
             const year = new Date(ticket.date_of_travel).getFullYear();
             years.add(year);
         });
-        return Array.from(years).sort((a, b) => b - a); // Sort descending
-    }, [allTickets]);
+        return Array.from(years).sort((a, b) => b - a);
+    }, [allTickets, completedTickets, cancelledRequests]);
 
     // Handle preview request from backend
     useEffect(() => {
@@ -58,6 +59,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
             setViewRequest(initialCreatedTicket);
             setIsViewModalOpen(true);
             setActiveTab('all');
+            setActiveSubTab('active');
             setShowSuccessMessage(true);
             
             const timer = setTimeout(() => {
@@ -162,6 +164,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                     setSelectedRequest(null);
                     setTicketNumber('');
                     setActiveTab('all');
+                    setActiveSubTab('active');
                 },
                 onError: (errors) => {
                     setSending(false);
@@ -217,6 +220,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
     // Filter tickets based on search, month, year, and allTime
     const filteredTickets = React.useMemo(() => {
         return allTickets.filter(ticket => {
+            if (ticket.status === 'cancelled') return false;
             // Search filter
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
@@ -245,6 +249,31 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
         });
     }, [allTickets, searchQuery, selectedMonth, selectedYear, allTime]);
 
+    const filteredCancelledTickets = React.useMemo(() => {
+        return cancelledRequests.filter(ticket => {
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = (
+                    ticket.trip_ticket_number?.toLowerCase().includes(query) ||
+                    ticket.user?.name?.toLowerCase().includes(query) ||
+                    ticket.driver?.name?.toLowerCase().includes(query) ||
+                    ticket.vehicle?.plate_number?.toLowerCase().includes(query) ||
+                    ticket.destination?.toLowerCase().includes(query)
+                );
+                if (!matchesSearch) return false;
+            }
+
+            if (!allTime) {
+                const ticketDate = new Date(ticket.date_of_travel);
+                const ticketMonth = ticketDate.getMonth() + 1;
+                const ticketYear = ticketDate.getFullYear();
+                if (ticketMonth !== selectedMonth || ticketYear !== selectedYear) return false;
+            }
+
+            return true;
+        });
+    }, [cancelledRequests, searchQuery, selectedMonth, selectedYear, allTime]);
+
     const sortedTickets = React.useMemo(() => {
         return [...filteredTickets].sort((a, b) => {
             if (!a.trip_ticket_number || !b.trip_ticket_number) return 0;
@@ -252,11 +281,52 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
         });
     }, [filteredTickets]);
 
+    const sortedCancelledTickets = React.useMemo(() => {
+        return [...filteredCancelledTickets].sort((a, b) =>
+            (a.trip_ticket_number || '').localeCompare(b.trip_ticket_number || '')
+        );
+    }, [filteredCancelledTickets]);
+
+    const filteredCompletedTickets = React.useMemo(() => {
+        return completedTickets.filter(ticket => {
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = (
+                    ticket.trip_ticket_number?.toLowerCase().includes(query) ||
+                    ticket.user?.name?.toLowerCase().includes(query) ||
+                    ticket.driver?.name?.toLowerCase().includes(query) ||
+                    ticket.vehicle?.plate_number?.toLowerCase().includes(query) ||
+                    ticket.destination?.toLowerCase().includes(query)
+                );
+                if (!matchesSearch) return false;
+            }
+
+            if (!allTime) {
+                const ticketDate = new Date(ticket.date_of_travel);
+                const ticketMonth = ticketDate.getMonth() + 1;
+                const ticketYear = ticketDate.getFullYear();
+                if (ticketMonth !== selectedMonth || ticketYear !== selectedYear) return false;
+            }
+
+            return true;
+        });
+    }, [completedTickets, searchQuery, selectedMonth, selectedYear, allTime]);
+
+    const sortedCompletedTickets = React.useMemo(() => {
+        return [...filteredCompletedTickets].sort((a, b) =>
+            (a.trip_ticket_number || '').localeCompare(b.trip_ticket_number || '')
+        );
+    }, [filteredCompletedTickets]);
+
     const handleExportExcel = async () => {
         setExporting(true);
         try {
             // Prepare tickets data for export
-            const ticketsToExport = sortedTickets.map(ticket => ({
+            const mergedTickets = [...sortedTickets, ...sortedCompletedTickets, ...sortedCancelledTickets].sort((a, b) =>
+                (a.trip_ticket_number || '').localeCompare(b.trip_ticket_number || '')
+            );
+
+            const ticketsToExport = mergedTickets.map(ticket => ({
                 trip_ticket_no: ticket.trip_ticket_number,
                 driver: ticket.driver?.name || 'N/A',
                 vehicle: `${ticket.vehicle?.plate_number || 'N/A'} - ${ticket.vehicle?.description || ''}`,
@@ -264,6 +334,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                 destination: ticket.destination,
                 purpose: ticket.purpose,
                 date_of_travel: format(new Date(ticket.date_of_travel), 'MMMM d, yyyy'),
+                status: ticket.status,
                 remarks: ''
             }));
 
@@ -341,7 +412,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
             <table className="min-w-full w-full table-auto">
                 <thead>
                     <tr className="bg-gray-50 text-left">
-                        {(activeTab === 'all' || activeTab === 'cancelled') && (
+                        {activeTab === 'all' && (
                             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                 Trip Ticket #
                             </th>
@@ -361,7 +432,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                             Travel Date & Time
                         </th>
-                        {activeTab === 'cancelled' && (
+                        {activeSubTab === 'cancelled' && (
                             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                 Cancelled At
                             </th>
@@ -376,7 +447,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                 <tbody className="divide-y divide-gray-200">
                     {requests.length === 0 ? (
                         <tr>
-                            <td colSpan={activeTab === 'cancelled' ? 7 : activeTab === 'all' ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan={activeSubTab === 'cancelled' ? 7 : activeTab === 'all' ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
                                 <div className="flex flex-col items-center justify-center">
                                     <FileText className="w-12 h-12 mb-2 text-gray-400" />
                                     <p>No requests found</p>
@@ -385,13 +456,15 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                         </tr>
                     ) : (
                         requests.map((request) => (
-                            <tr key={request.id} className={`hover:bg-gray-50 ${activeTab === 'cancelled' ? 'bg-gray-50 opacity-75' : ''}`}>
-                                {(activeTab === 'all' || activeTab === 'cancelled') && (
+                            <tr key={request.id} className={`hover:bg-gray-50 ${activeSubTab === 'cancelled' ? 'bg-gray-50 opacity-75' : ''}`}>
+                                {activeTab === 'all' && (
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                                         {request.trip_ticket_number
-                                            ? activeTab === 'cancelled'
-                                                ? <span className="line-through text-gray-400">{request.trip_ticket_number}</span>
-                                                : <span className="text-blue-600">{request.trip_ticket_number}</span>
+                                            ? activeSubTab === 'cancelled'
+                                                ? <span className="text-gray-400">{request.trip_ticket_number}</span>
+                                                : activeSubTab === 'completed'
+                                                    ? <span className="text-purple-600">{request.trip_ticket_number}</span>
+                                                    : <span className="text-blue-600">{request.trip_ticket_number}</span>
                                             : <span className="text-gray-400">No ticket</span>
                                         }
                                     </td>
@@ -412,7 +485,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     <div>{formatDate(request.date_of_travel)}</div>
                                     <div className="text-xs text-gray-500">{formatTime(request.time_of_travel)}</div>
                                 </td>
-                                {activeTab === 'cancelled' && (
+                                {activeSubTab === 'cancelled' && (
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {request.cancelled_at
                                             ? format(new Date(request.cancelled_at), 'MMM d, yyyy h:mm a')
@@ -526,26 +599,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     <CheckCircle className="w-4 h-4" />
                                     <span>List of All Tickets</span>
                                     <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                        {allTickets.length}
-                                    </span>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={() => setActiveTab('cancelled')}
-                                className={`
-                                    py-4 px-6 text-sm font-medium border-b-2 transition-colors
-                                    ${activeTab === 'cancelled'
-                                        ? 'border-gray-500 text-gray-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }
-                                `}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <X className="w-4 h-4" />
-                                    <span>Cancelled</span>
-                                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                        {cancelledRequests.length}
+                                        {allTickets.length + completedTickets.length + cancelledRequests.length}
                                     </span>
                                 </div>
                             </button>
@@ -556,6 +610,54 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                 {activeTab === 'all' && (
                     <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
                         <div className="flex flex-col gap-4">
+                            {/* Sub-tabs */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setActiveSubTab('active')}
+                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                        activeSubTab === 'active'
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    Active
+                                    <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                                        activeSubTab === 'active' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {filteredTickets.length}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveSubTab('completed')}
+                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                        activeSubTab === 'completed'
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    Completed
+                                    <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                                        activeSubTab === 'completed' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {filteredCompletedTickets.length}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveSubTab('cancelled')}
+                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                        activeSubTab === 'cancelled'
+                                            ? 'bg-gray-600 text-white'
+                                            : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    Cancelled
+                                    <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                                        activeSubTab === 'cancelled' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {filteredCancelledTickets.length}
+                                    </span>
+                                </button>
+                            </div>
                             {/* Search Bar Row */}
                             <div className="flex-1">
                                 <label htmlFor="search" className="sr-only">Search tickets</label>
@@ -624,13 +726,13 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     </label>
 
                                     <div className="text-sm text-gray-600 ml-2">
-                                        Showing <span className="font-semibold">{filteredTickets.length}</span> of <span className="font-semibold">{allTickets.length}</span> tickets
+                                        Showing <span className="font-semibold">{filteredTickets.length + filteredCompletedTickets.length + filteredCancelledTickets.length}</span> of <span className="font-semibold">{allTickets.length + completedTickets.length + cancelledRequests.length}</span> tickets
                                     </div>
                                 </div>
                                 
                                 <button
                                     onClick={handleExportExcel}
-                                    disabled={exporting || filteredTickets.length === 0}
+                                    disabled={exporting || (filteredTickets.length === 0 && filteredCompletedTickets.length === 0 && filteredCancelledTickets.length === 0)}
                                     className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {exporting ? (
@@ -652,8 +754,9 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
 
                 <div className="mt-0">
                     {activeTab === 'pending' && renderTable(pendingRequests)}
-                    {activeTab === 'all' && renderTable(sortedTickets)}
-                    {activeTab === 'cancelled' && renderTable(cancelledRequests, false)}
+                    {activeTab === 'all' && activeSubTab === 'active' && renderTable(sortedTickets)}
+                    {activeTab === 'all' && activeSubTab === 'completed' && renderTable(sortedCompletedTickets)}
+                    {activeTab === 'all' && activeSubTab === 'cancelled' && renderTable(sortedCancelledTickets, false)}
                 </div>
             </div>
 
