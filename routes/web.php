@@ -161,7 +161,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/test-mail', function () {
     Mail::raw('Test email from Motorpool!', function ($m) {
-        $m->to('hasperthegreat.12304@gmail.com')->subject('Test Email');
+        $m->to('hasperdhan@gmail.com')->subject('Test Email');
     });
     return 'Mail sent!';
 });
