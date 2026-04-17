@@ -148,13 +148,20 @@ class TicketController extends Controller
 
         // All requests that have trip ticket numbers (for "List of All Tickets" tab)
         $allTickets = Request::with(['driver', 'vehicle', 'user'])
-            ->whereIn('status', [Request::STATUS_APPROVED, Request::STATUS_COMPLETED])
+            ->where('status', Request::STATUS_APPROVED)
+            ->whereNotNull('trip_ticket_number')
+            ->orderBy('trip_ticket_number', 'asc')
+            ->get();
+
+        $completedTickets = Request::with(['driver', 'vehicle', 'user'])
+            ->where('status', Request::STATUS_COMPLETED)
             ->whereNotNull('trip_ticket_number')
             ->orderBy('trip_ticket_number', 'asc')
             ->get();
 
         $cancelledRequests = Request::with(['driver', 'vehicle', 'user'])
             ->where('status', Request::STATUS_CANCELLED)
+            ->whereNotNull('trip_ticket_number')
             ->orderBy('cancelled_at', 'desc')
             ->get();
 
@@ -175,11 +182,12 @@ class TicketController extends Controller
         return inertia('Tickets/PendingRequests', [
             'pendingRequests' => $pendingRequests,
             'allTickets' => $allTickets,
+            'completedTickets' => $completedTickets,
             'previewRequest' => $previewRequest,
             'createdTripTicket' => $createdTripTicket,
             'cancelledRequests' => $cancelledRequests,
         ]);
-    }
+            }
 
     /**
      * Check availability of drivers and vehicles for new trip ticket creation
@@ -750,7 +758,7 @@ class TicketController extends Controller
                 'tickets.*.destination' => 'required|string',
                 'tickets.*.purpose' => 'required|string',
                 'tickets.*.date_of_travel' => 'required|string',
-                'tickets.*.remarks' => 'nullable|string',
+                'tickets.*.status' => 'nullable|string',
                 'month' => 'nullable|integer|min:1|max:12',
                 'year' => 'nullable|integer',
                 'all_time' => 'required|boolean',
@@ -828,6 +836,8 @@ class TicketController extends Controller
             // Write data
             $row = 2;
             foreach ($tickets as $ticket) {
+                $isCancelled = ($ticket['status'] ?? '') === 'cancelled';
+
                 $sheet->setCellValue('A' . $row, $ticket['trip_ticket_no']);
                 $sheet->setCellValue('B' . $row, $ticket['driver']);
                 $sheet->setCellValue('C' . $row, $ticket['vehicle']);
@@ -835,7 +845,7 @@ class TicketController extends Controller
                 $sheet->setCellValue('E' . $row, $ticket['destination']);
                 $sheet->setCellValue('F' . $row, $ticket['purpose']);
                 $sheet->setCellValue('G' . $row, $ticket['date_of_travel']);
-                $sheet->setCellValue('H' . $row, $ticket['remarks'] ?? '');
+                $sheet->setCellValue('H' . $row, $isCancelled ? 'CANCELLED' : '');
 
                 // Style data cells
                 $dataStyle = [
@@ -855,6 +865,19 @@ class TicketController extends Controller
                     ],
                 ];
                 $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray($dataStyle);
+
+                // Apply red font to remarks cell only if cancelled
+                if ($isCancelled) {
+                    $sheet->getStyle('H' . $row)->applyFromArray([
+                        'font' => [
+                            'size' => 10,
+                            'name' => 'Bookman Old Style',
+                            'bold' => true,
+                            'color' => ['rgb' => 'DC2626'],
+                        ],
+                    ]);
+                }
+
                 $sheet->getRowDimension($row)->setRowHeight(-1);
 
                 $row++;
