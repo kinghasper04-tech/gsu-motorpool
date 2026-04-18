@@ -476,7 +476,7 @@ export default function PendingRequests({ pendingRequests = [], allTickets = [],
                                     {request.driver?.name || 'Not assigned'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {request.vehicle?.plate_number || 'Not assigned'}
+                                    {request.vehicle?.description || 'Not assigned'}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                                     {request.destination}

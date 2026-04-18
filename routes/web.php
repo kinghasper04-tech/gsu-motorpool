@@ -159,9 +159,3 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/calendar/requests/{id}', [CalendarController::class, 'show'])->name('calendar.requests.show');
 });
 
-Route::get('/test-mail', function () {
-    Mail::raw('Test email from Motorpool!', function ($m) {
-        $m->to('hasperdhan@gmail.com')->subject('Test Email');
-    });
-    return 'Mail sent!';
-});

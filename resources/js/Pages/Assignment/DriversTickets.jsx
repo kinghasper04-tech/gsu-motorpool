@@ -255,7 +255,7 @@ export default function DriversTickets({ auth, tickets }) {
                                                 {ticket.driver?.name || 'Not assigned'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <div>{ticket.vehicle?.model || 'N/A'}</div>
+                                                <div>{ticket.vehicle?.description || 'N/A'}</div>
                                                 <div className="text-xs text-gray-500">
                                                     {ticket.vehicle?.plate_number || 'N/A'}
                                                 </div>
