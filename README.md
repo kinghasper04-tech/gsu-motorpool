@@ -1,61 +1,125 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Web-Based Motor Pool Services Request System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A capstone project developed for the **General Services Unit (GSU) of Quirino State University – Diffun Campus**, replacing a manual, paper-based vehicle request process with a centralized, role-based digital workflow.
 
-## About Laravel
+> Evaluated with 30 real end users (administrative staff, faculty/staff, and IT experts) using the System Usability Scale (SUS) — achieved a score of **91.25 ("Excellent")**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📌 About
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The GSU previously managed motor pool requests manually — leading to scheduling conflicts, delayed approvals, duplicate reservations, and unclear driver assignments. This system digitizes the entire process, from request submission to trip ticket generation, with automated notifications and real-time visibility for every stakeholder involved.
 
-## Learning Laravel
+Built as a **Single-Page Application (SPA)** using Laravel, React, and Inertia.js, and developed using the **Rapid Application Development (RAD)** methodology.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 👥 User Roles
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Client** — submits vehicle service requests and tracks their status
+- **Assignment Admin** — assigns available drivers and vehicles to requests
+- **Approval Admin** — reviews and approves/declines assigned requests
+- **Ticket Admin** — generates official trip tickets for approved requests
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ✨ Key Features
 
-## Laravel Sponsors
+- **Online Request Submission** — digital form with a PDF preview before final submission
+- **Centralized Assignment Management** — automatically filters and displays only available drivers/vehicles for the requested date, preventing double-booking
+- **Approval Workflow** — approve/decline requests directly in-system, with required reason capture for declined requests
+- **Role-Based Dashboards** — each role sees a dashboard relevant to their responsibilities (pending items, recent activity, calendar of trips)
+- **Real-Time Calendar View** — daily, weekly, and monthly views of scheduled trips
+- **Automated Notifications** — role-specific in-app and email notifications keep every stakeholder updated without manual follow-up
+- **Trip Ticket Generation** — official trip tickets generated and exported as PDF
+- **Database-Driven Record Archive** — centralized, searchable history of all requests, assignments, approvals, and tickets
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠️ Tech Stack
 
-### Premium Partners
+| Layer | Technology |
+|---|---|
+| Backend | Laravel 12 |
+| Frontend | React.js |
+| SPA Bridge | Inertia.js |
+| Styling | Bootstrap |
+| Database | MySQL |
+| Design/Prototyping | Adobe XD |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+## 🚀 Getting Started
 
-## Contributing
+### Prerequisites
+- PHP >= 8.2
+- Composer
+- Node.js & npm
+- MySQL
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Installation
 
-## Code of Conduct
+```bash
+# Clone the repository
+git clone https://github.com/kinghasper04-tech/gsu-motorpool.git
+cd gsu-motorpool
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Install PHP dependencies
+composer install
 
-## Security Vulnerabilities
+# Install JS dependencies
+npm install
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Set up environment
+cp .env.example .env
+php artisan key:generate
 
-## License
+# Configure your database in .env, then run migrations
+php artisan migrate
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Build frontend assets
+npm run dev
+
+# Serve the application
+php artisan serve
+```
+
+## 📸 Screenshots
+
+**Online Request Submission**
+Faculty/staff submit a vehicle request — destination, purpose, date, time, and passengers — with a preview step before final submission.
+![Request Submission](screenshots/01-request-submission.png)
+
+**Centralized Assignment Management**
+The Assignment Admin selects a vehicle and driver for a request; only available options for the requested date are shown to prevent double-booking.
+![Assignment Management](screenshots/02-assignment-management.jpg)
+
+**Approval Management**
+The Approval Admin reviews assigned requests and approves or declines them directly within the system.
+![Approval Management](screenshots/03-approval-management.png)
+
+**Role-Based Dashboard**
+Each role gets a dashboard tailored to their responsibilities — pending items, approval rate, recent decisions, and scheduled trips at a glance.
+![Admin Dashboard](screenshots/04-admin-dashboard.png)
+
+**Calendar View**
+A real-time calendar shows assigned, approved, and completed trips across the month.
+![Calendar View](screenshots/05-calendar-view.png)
+
+**Automated Notifications**
+Clients and admins receive real-time, role-specific notifications as their requests move through the workflow.
+![Notifications](screenshots/06-notifications.png)
+
+**Trip Ticket Generation**
+The Ticket Admin assigns an official trip ticket number and generates the final trip ticket for an approved request.
+![Trip Ticket Generation](screenshots/07-trip-ticket-generation.png)
+
+## 📊 Usability Evaluation
+
+The system was evaluated using the **System Usability Scale (SUS)** with 30 respondents across three user groups: Administrative Staff, Faculty & Staff Users, and IT Experts. The evaluation returned an overall SUS score of **91.25**, rated **"Excellent"** — indicating the system is highly usable, accessible, and effective at addressing the limitations of the previous manual process.
+
+## 👨‍💻 Project Team
+
+Developed by a 5-member BSIT capstone team at Quirino State University – Diffun Campus (2026):
+
+- **Bucahan, Hasper Dhan D.** — Data Gathering, Front-end Development, Back-end Development
+- Del Rosario, Kristene Marizz D. — Researcher, Data Gathering
+- Gaspar, Jonesish P. — Assistant Leader, Data Gathering
+- Laranang, Jose Jr. V. — Assistant Researcher, Data Gathering
+- Manahan, Cedric Neal Dj L. — Leader, Researcher
+
+## 📄 License
+
+This project was developed for academic purposes as a BSIT capstone requirement at Quirino State University – Diffun Campus.
